@@ -8,6 +8,8 @@ cd "$PROJECT_DIR" || {
     exit 1
 }
 
+cwd=$(pwd)
+
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 DELETED_COUNT=$(python manage.py shell -c "

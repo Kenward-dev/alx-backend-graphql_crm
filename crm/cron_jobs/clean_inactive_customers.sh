@@ -1,11 +1,16 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+cd "$PROJECT_DIR" || {
+    echo "Failed to navigate to project root: $PROJECT_DIR"
+    exit 1
+}
+
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
-PROJECT_DIR="$(dirname "$0")/../.."
-
-DELETED_COUNT=$(cd "$PROJECT_DIR" && \
-    python manage.py shell -c "
+DELETED_COUNT=$(python manage.py shell -c "
 from datetime import timedelta
 from django.utils import timezone
 from crm.models import Customer
@@ -14,4 +19,8 @@ deleted, _ = Customer.objects.filter(order__isnull=True, created_at__lte=cutoff_
 print(deleted)
 ")
 
-echo "$TIMESTAMP - Deleted $DELETED_COUNT inactive customers" >> /tmp/customer_cleanup_log.txt
+if [ -n "$DELETED_COUNT" ]; then
+    echo "$TIMESTAMP - Deleted $DELETED_COUNT inactive customers" >> /tmp/customer_cleanup_log.txt
+else
+    echo "$TIMESTAMP - Failed to delete customers or none found" >> /tmp/customer_cleanup_log.txt
+fi
